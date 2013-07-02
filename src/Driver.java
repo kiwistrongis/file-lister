@@ -9,30 +9,26 @@ public class Driver {
 		Path program_path;
 		File input;
 		File output;
-		Converter converter;
+		FileLister fileLister;
 		final Configuration config = new Configuration();
 		final Controller controller = new Controller();
 
 		//find program path
 		//handle args
-		if( args.length == 0){
-			File dir = new File( System.getProperty("user.dir"));
-			input = dir;
-			output = dir;}
-		else if( args.length == 1){
-			File file = new File( args[0]);
-			if( file.isDirectory())
-				input = output = file;
-			else
-				input = file;
-				output = Converter.changeFileExt( file, "csv");}
-		else{
-				input = new File( args[0]);
-				output = new File( args[1]);}
+		if( args.length == 2){
+			input = new File( args[0]);
+			output = new File( args[1]);}
+		else {
+			input = args.length == 0 ?
+				new File( System.getProperty("user.dir")):
+				new File( args[0]);
+			Path input_path = input.toPath();
+			output = input_path.resolve(
+				input.getName().concat(".txt")).toFile();}
 
-		//initialize converter
-		converter = new Converter( input, output);
-		controller.listenTo( converter);
+		//initialize fileLister
+		fileLister = new FileLister( input, output);
+		controller.listenTo( fileLister);
 
 		//locate config file
 		ResourceManager rm = new ResourceManager();
@@ -46,10 +42,10 @@ public class Driver {
 			System.out.println("Configuration loading failed");
 			e.printStackTrace();}
 
-		//prepare converter
+		//prepare fileLister
 		try{
 			if( config != null)
-				config.load( converter);}
+				config.load( fileLister);}
 		catch( Exception e){
 			e.printStackTrace();}
 
@@ -65,8 +61,8 @@ public class Driver {
 		//start
 		if( nogui){
 			try{
-				converter.prep();
-				converter.start();}
+				fileLister.prep();
+				fileLister.start();}
 			catch( Exception e){
 				e.printStackTrace();}}}
 }

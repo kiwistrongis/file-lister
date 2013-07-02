@@ -13,18 +13,18 @@ public class Configuration{
 	public File file;
 	public Ini ini;
 	public Ini.Section meta_section;
-	public Ini.Section conv_section;
+	public Ini.Section fileLister_section;
 	public Ini.Section gui_section;
 	
 	public Configuration(){
 		ini = null;
-		conv_section = null;
+		fileLister_section = null;
 		gui_section = null;
 		meta_section = null;}
 	public Configuration( File file)
 			throws java.io.IOException{
 		ini = null;
-		conv_section = null;
+		fileLister_section = null;
 		gui_section = null;
 		meta_section = null;
 		this.file = file;
@@ -37,13 +37,13 @@ public class Configuration{
 		Ini ini = new Ini();
 		ini.load(file);
 		meta_section = ini.get("Meta");
-		conv_section = ini.get("Converter");
+		fileLister_section = ini.get("FileLister");
 		gui_section = ini.get("Gui");}
 
 	//load methods
-	public void load( Converter conv){
+	public void load( FileLister fileLister){
 		//setup
-		if( conv_section == null) return;
+		if( fileLister_section == null) return;
 		String data;
 		//check if this configuration file is enabled or not
 		if( meta_section != null){
@@ -51,25 +51,15 @@ public class Configuration{
 			boolean enabled = Boolean.parseBoolean(data);
 			if( ! enabled) return;}
 		//delimiter
-		data = conv_section.get("delimiter");
-		if( data != null)
-			conv.delimiter = data.replace("\\t","\t").charAt(0);
+		data = fileLister_section.get("delimiter");
+		if( data != null){
+			data = data.replace("\\t","\t");
+			data = data.replace("\\n","\n");
+			fileLister.delimiter = data;}
 		//encoding
-		data = conv_section.get("encoding");
+		data = fileLister_section.get("encoding");
 		if( data != null)
-			conv.encoding = data;
-		//output_ext
-		/*data = conv_section.get("output_ext");
-		if( data != null)
-			conv.output_ext = data;*/
-		//workerLimitEnabled
-		data = conv_section.get("workerLimitEnabled");
-		if( data != null)
-			conv.workerLimitEnabled = Boolean.parseBoolean(data);
-		//maxWorkerCount
-		data = conv_section.get("maxWorkerCount");
-		if( data != null)
-			conv.maxWorkerCount = Integer.parseInt(data);}
+			fileLister.encoding = data;}
 
 	public void load( Gui gui){}
 

@@ -1,0 +1,3 @@
+#!/bin/bash
+make file-lister.jar -s
+java -jar file-lister.jar $@

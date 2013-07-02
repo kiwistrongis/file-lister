@@ -23,25 +23,23 @@ public class Controller extends KeyAdapter
 		sp_input_button_ac = "sp_input_button_ac",
 		sp_output_text_ac = "sp_output_text_ac",
 		sp_output_button_ac = "sp_output_button_ac",
-		op_toCSV_ac = "op_toCSV_ac",
-		op_toXLS_ac = "op_toXLS_ac",
 		op_cancel_ac = "op_cancel_ac",
 		op_done_ac = "op_done_ac",
 		pp_done_ac = "pp_done_ac",
 		documentContainer_property = "documentContainer_property";
 	// major objects
 	Gui gui;
-	Converter converter;
+	FileLister fileLister;
 	// minor fields
 
 	public Controller(){
 		gui = null;
-		converter = null;}
+		fileLister = null;}
 
-	public void listenTo(Converter converter){
-		//listen to converter
-		this.converter = converter;
-		converter.listeners.add(this);}
+	public void listenTo(FileLister fileLister){
+		//listen to fileLister
+		this.fileLister = fileLister;
+		fileLister.listeners.add(this);}
 
 	public void listenTo( Gui gui){
 		//listen to gui
@@ -57,9 +55,6 @@ public class Controller extends KeyAdapter
 		this.listenTo( gui.startPanel.output.button, sp_output_button_ac);
 
 		// options panel
-		gui.optionsPanel.mode_toCSV.setSelected( true);
-		this.listenTo( gui.optionsPanel.mode_toCSV, op_toCSV_ac);
-		this.listenTo( gui.optionsPanel.mode_toXLS, op_toXLS_ac);
 		this.listenTo( gui.optionsPanel.cancel, op_cancel_ac);
 		this.listenTo( gui.optionsPanel.done, op_done_ac);
 
@@ -67,10 +62,10 @@ public class Controller extends KeyAdapter
 		this.listenTo( gui.progressPanel.progressBar);
 		this.listenTo( gui.progressPanel.button, pp_done_ac);
 
-		//update gui with converter's files
-		setInput( converter.input);
-		setOutput( converter.output);
-		updateFileCount();}
+		//update gui with fileLister's files
+		setInput( fileLister.input);
+		setOutput( fileLister.output);
+		updateMessage();}
 
 	public void listenTo( JButton button, String ac){
 		button.setActionCommand( ac);
@@ -95,21 +90,22 @@ public class Controller extends KeyAdapter
 	
 	//handles
 	public void workerTerminated( WorkerTerminationEvent event){
-		if( converter!= null)
-			synchronized( converter.statslock){
+		if( fileLister!= null)
+			synchronized( fileLister.statslock){
 				SwingUtilities.invokeLater(new Runnable() {
 					public void run() {
 						gui.progressPanel.progressBar.setValue(
-							converter.completed);}});
-				if( converter.done)
+							fileLister.completed);}});
+				if( fileLister.done)
 					gui.progressPanel.button.setEnabled( true);}
+		if( event.worker != null)
 			gui.progressPanel.log.append(
 				String.format(
-					"%s converted to %s %s\n",
-					event.worker.files.input.getName(),
-					event.worker.files.output.getName(),
-					event.worker.succeeded ?
-						"successfully" : "unsuccessfully"));}
+					"Finished Directory %s\n",
+					event.worker.input.getName()));
+		else
+			gui.progressPanel.log.append("Done");}
+
 
 	public void actionPerformed( ActionEvent event){
 		String ac = event.getActionCommand();
@@ -117,14 +113,14 @@ public class Controller extends KeyAdapter
 		switch( ac){
 			//start panel
 			case sp_start_ac:{
-				synchronized( converter.statslock){
+				synchronized( fileLister.statslock){
 					gui.progressPanel.log.setText("");
 					gui.progressPanel.progressBar.setMaximum(
-						converter.total);
+						fileLister.total);
 					gui.progressPanel.progressBar.setValue(
-						converter.completed);
+						fileLister.completed);
 					gui.progressPanel.switchTo();}
-				converter.start();
+				fileLister.start();
 				break;}
 			case sp_close_ac:{
 				gui.close();
@@ -136,9 +132,9 @@ public class Controller extends KeyAdapter
 				break;}
 			case sp_input_button_ac:{
 				gui.fileChooser.setCurrentDirectory(
-					converter.input.isDirectory() ?
-						converter.input :
-						converter.input.getParentFile());
+					fileLister.input.isDirectory() ?
+						fileLister.input :
+						fileLister.input.getParentFile());
 				File selection = gui.getFile(
 					"Select Input Directory");
 				if( selection != null)
@@ -148,9 +144,9 @@ public class Controller extends KeyAdapter
 				break;}
 			case sp_output_button_ac:{
 				gui.fileChooser.setCurrentDirectory(
-					converter.output.isDirectory() ?
-						converter.output :
-						converter.output.getParentFile());
+					fileLister.output.isDirectory() ?
+						fileLister.output :
+						fileLister.output.getParentFile());
 				File selection = gui.getFile(
 					"Select Output Directory");
 				if( selection != null)
@@ -159,23 +155,15 @@ public class Controller extends KeyAdapter
 
 			//progress panel
 			case pp_done_ac:{
-				if( converter.done){
+				if( fileLister.done){
 					gui.startPanel.switchTo();
-					try{ converter.prep();}
+					try{ fileLister.prep();}
 					catch( java.io.IOException exception){
 						exception.printStackTrace();}
-					gui.startPanel.start.setEnabled( converter.ready);}
+					gui.startPanel.start.setEnabled( fileLister.ready);}
 				break;}
 
 			//options panel
-			case op_toCSV_ac:{
-				converter.direction = Converter.Direction.toCSV;
-				updateFileCount();
-				break;}
-			case op_toXLS_ac:{
-				converter.direction = Converter.Direction.toXLS;
-				updateFileCount();
-				break;}
 			case op_cancel_ac:{
 				break;}
 			case op_done_ac:{
@@ -188,12 +176,12 @@ public class Controller extends KeyAdapter
 		//System.out.println( e.getKeyCode());
 		switch( e.getKeyCode()){
 			case KeyEvent.VK_ESCAPE:{
-				synchronized( converter.statslock){
-					if( converter.done || ! converter.started)
+				synchronized( fileLister.statslock){
+					if( fileLister.done || ! fileLister.started)
 						gui.close();}
 				break;}
 			case KeyEvent.VK_ENTER:{
-				updateFileCount();
+				updateMessage();
 				break;}
 			default: break;}}
 
@@ -226,42 +214,30 @@ public class Controller extends KeyAdapter
 	//private functions
 	private void setInput(String text){
 		File input = new File( text);
-		converter.input = input;
-		updateFileCount();}
+		fileLister.input = input;
+		updateMessage();}
 	private void setInput(File file){
-		converter.input = file;
+		fileLister.input = file;
 		gui.startPanel.input.text.setText(
 			file.getAbsolutePath());
-		updateFileCount();}
+		updateMessage();}
 
 	private void setOutput(String text){
 		File output = new File( text);
-		converter.output = output;
-		updateFileCount();}
+		fileLister.output = output;
+		updateMessage();}
 	private void setOutput(File file){
-		converter.output = file;
+		fileLister.output = file;
 		gui.startPanel.output.text.setText(
 			file.getAbsolutePath());
-		updateFileCount();}
+		updateMessage();}
 
-	private void updateFileCount(){
-		converter.ready = false;
-		if( converter.input.exists())
-			try{
-				converter.prep();
-				int count = converter.filepairs.size();
-				gui.startPanel.fileCount.setCount(count);
-				converter.ready = converter.ready && count > 0;
-				gui.startPanel.start.setEnabled( converter.ready);}
-			catch( FileNotFoundException e){
-				gui.startPanel.fileCount.setCount(0);
-				gui.startPanel.start.setEnabled( false);}
-			catch( IOException e){
-				gui.startPanel.fileCount.setCount(
-					converter.input.listFiles( converter.filter)
-						.length);
-				gui.startPanel.start.setEnabled( false);}
-		else {
-			gui.startPanel.fileCount.setCount( 0);
+	private void updateMessage(){
+		try{
+			fileLister.prep();
+			gui.startPanel.message.setText( "Ready");
+			gui.startPanel.start.setEnabled( fileLister.ready);}
+		catch( Exception e){
+			gui.startPanel.message.setText( e.getMessage());
 			gui.startPanel.start.setEnabled( false);}}
 }

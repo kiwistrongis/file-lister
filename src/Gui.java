@@ -26,8 +26,8 @@ public class Gui extends JFrame{
 
 	public Gui(){
 		//default fields
-		title = "Xls2Csv Converter";
-		icon_filename = "resource/xls2csv.png";
+		title = "File Lister";
+		icon_filename = "resource/file-lister.png";
 		window_x = 0;
 		window_y = 0;
 		window_width = 500;
@@ -144,7 +144,7 @@ public class Gui extends JFrame{
 		FileSelectionRow input;
 		FileSelectionRow output;
 		boolean output_manuallySet;
-		CountLabel fileCount;
+		JLabel message;
 		JButton close;
 		JButton options;
 		JButton start;
@@ -203,7 +203,7 @@ public class Gui extends JFrame{
 			this.add( output.button, constraints);
 
 			//file count
-			fileCount = new CountLabel(
+			message = new JLabel(
 				"Convertible files found: ");
 			// add file count label
 			constraints.gridx = 0;
@@ -211,7 +211,7 @@ public class Gui extends JFrame{
 			constraints.weightx = 1;
 			constraints.gridwidth = 3;
 			constraints.anchor = GridBagConstraints.LINE_START;
-			this.add( fileCount, constraints);
+			this.add( message, constraints);
 			//reset
 			constraints.weightx = 0;
 			constraints.gridwidth = 1;
@@ -227,7 +227,7 @@ public class Gui extends JFrame{
 			options.setMnemonic( KeyEvent.VK_O);
 			start = new JButton("Start");
 			start.setMnemonic( KeyEvent.VK_S);
-			//buttons.add( fileCount);
+			//buttons.add( message);
 			buttons.add( close);
 			buttons.add( options);
 			buttons.add( start);
@@ -256,21 +256,6 @@ public class Gui extends JFrame{
 				button_dim.width = button_dim.height;
 				button.setMinimumSize(button_dim);
 				button.setPreferredSize(button_dim);}
-		}
-		protected class CountLabel extends JLabel {
-			public String prefix;
-			public int count;
-			public CountLabel( String prefix){
-				super( prefix);
-				this.prefix = prefix;
-				this.count = 0;
-				setText( prefix + count);}
-			public void setCount( int count){
-				this.count = count;
-				setText( String.format(
-					"%s%d",
-					prefix, count));}
-
 		}
 	}
 	protected class ProgressPanel extends CustomJPanel {
@@ -339,10 +324,7 @@ public class Gui extends JFrame{
 			defaultButton = button;}
 	}
 	protected class OptionsPanel extends CustomJPanel {
-		public ButtonGroup group;
 		public JLabel mode_label;
-		public JRadioButton mode_toCSV;
-		public JRadioButton mode_toXLS;
 		public JButton cancel;
 		public JButton done;
 
@@ -356,23 +338,10 @@ public class Gui extends JFrame{
 			constraints.fill = GridBagConstraints.NONE;
 			constraints.insets = new Insets( 2, 2, 2, 2);
 
-			mode_label = new JLabel("Conversion Mode:");
+			mode_label = new JLabel("Include Subfolders:");
 			constraints.gridx = 0;
 			constraints.gridy = 0;
 			this.add( mode_label, constraints);
-
-			mode_toCSV = new JRadioButton("XLS to CSV");
-			constraints.gridx = 0;
-			constraints.gridy = 1;
-			this.add( mode_toCSV, constraints);
-			
-			mode_toXLS = new JRadioButton("CSV to XLS");
-			constraints.gridx = 1;
-			this.add( mode_toXLS, constraints);
-
-			group = new ButtonGroup();
-			group.add( mode_toXLS);
-			group.add( mode_toCSV);
 
 			cancel = new JButton("Cancel");
 			done = new JButton("Done");

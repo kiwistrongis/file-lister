@@ -1,3 +1,0 @@
-#!/bin/bash
-make xls2csv.jar -s
-java -jar xls2csv.jar $@
