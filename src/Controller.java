@@ -23,6 +23,8 @@ public class Controller extends KeyAdapter
 		sp_input_button_ac = "sp_input_button_ac",
 		sp_output_text_ac = "sp_output_text_ac",
 		sp_output_button_ac = "sp_output_button_ac",
+		op_recursive_ac = "op_recursive_ac",
+		op_relativize_ac = "op_relativize_ac",
 		op_cancel_ac = "op_cancel_ac",
 		op_done_ac = "op_done_ac",
 		pp_done_ac = "pp_done_ac",
@@ -55,6 +57,8 @@ public class Controller extends KeyAdapter
 		this.listenTo( gui.startPanel.output.button, sp_output_button_ac);
 
 		// options panel
+		this.listenTo( gui.optionsPanel.recursive, op_recursive_ac);
+		this.listenTo( gui.optionsPanel.relativize, op_relativize_ac);
 		this.listenTo( gui.optionsPanel.cancel, op_cancel_ac);
 		this.listenTo( gui.optionsPanel.done, op_done_ac);
 
@@ -65,14 +69,19 @@ public class Controller extends KeyAdapter
 		//update gui with fileLister's files
 		setInput( fileLister.input);
 		setOutput( fileLister.output);
-		updateMessage();}
+		updateMessage();
+		//update options panel
+		gui.optionsPanel.recursive.setSelected(
+			fileLister.recursive);
+		gui.optionsPanel.relativize.setSelected(
+			fileLister.relativize);}
 
 	public void listenTo( JButton button, String ac){
 		button.setActionCommand( ac);
 		button.addActionListener( this);
 		button.addKeyListener( this);}
 
-	public void listenTo( JRadioButton button, String ac){
+	public void listenTo( JCheckBox button, String ac){
 		button.setActionCommand( ac);
 		button.addActionListener( this);
 		button.addKeyListener( this);}
@@ -109,18 +118,21 @@ public class Controller extends KeyAdapter
 
 	public void actionPerformed( ActionEvent event){
 		String ac = event.getActionCommand();
-		System.out.println(ac);
+		//System.out.println(ac);
 		switch( ac){
 			//start panel
 			case sp_start_ac:{
-				synchronized( fileLister.statslock){
-					gui.progressPanel.log.setText("");
-					gui.progressPanel.progressBar.setMaximum(
-						fileLister.total);
-					gui.progressPanel.progressBar.setValue(
-						fileLister.completed);
-					gui.progressPanel.switchTo();}
 				fileLister.start();
+				while( true){
+					synchronized( fileLister.statslock){
+						if( fileLister.started){
+							gui.progressPanel.log.setText("");
+							gui.progressPanel.progressBar.setMaximum(
+								fileLister.total);
+							gui.progressPanel.progressBar.setValue(
+								fileLister.completed);
+							gui.progressPanel.switchTo();
+							break;}}}
 				break;}
 			case sp_close_ac:{
 				gui.close();
@@ -164,6 +176,14 @@ public class Controller extends KeyAdapter
 				break;}
 
 			//options panel
+			case op_recursive_ac:{
+				fileLister.recursive = 
+					gui.optionsPanel.recursive.isSelected();
+				break;}
+			case op_relativize_ac:{
+				fileLister.relativize = 
+					gui.optionsPanel.relativize.isSelected();
+				break;}
 			case op_cancel_ac:{
 				break;}
 			case op_done_ac:{
@@ -209,7 +229,6 @@ public class Controller extends KeyAdapter
 				setOutput( content);
 				break;}
 			default:break;}}
-		//System.out.printf("%s: %s\n", ac, content);}
 
 	//private functions
 	private void setInput(String text){

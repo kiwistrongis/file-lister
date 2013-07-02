@@ -5,7 +5,7 @@ clean: clean-specials
 	rm -rf bin/*
 	rm -rf output/*
 clean-specials:
-	rm -rf file-list.jar
+	rm -rf file-lister.jar
 freshen: clean all
 
 #variables
@@ -25,12 +25,12 @@ all: \
 #special
 test: bin/Driver.class
 	java $(cp) Driver input output/output.txt
-file-list.jar: \
+file-lister.jar: \
 		bin/Driver.class
 	cd bin && \
 	for file in $$(ls ../libs/*.jar); do jar xf $$file; done
 	cd bin && \
-	jar cfe ../file-list.jar Driver *
+	jar cfe ../file-lister.jar Driver *
 	
 #top
 bin/Driver.class: src/Driver.java \

@@ -15,8 +15,10 @@ public class FileLister {
 	public String encoding;
 	public String default_output_ext;
 	public boolean recursive;
+	public boolean relativize;
 	//working variables
 	public File input;
+	public Path input_path;
 	public File output;
 	public Vector<File> directories;
 	public Vector<Worker> workers;
@@ -40,7 +42,8 @@ public class FileLister {
 		delimiter = "\t";
 		eol = "\r\n";
 		encoding = "UTF-8";
-		recursive = false;
+		recursive = true;
+		relativize = true;
 		//conversion variables
 		this.input = input;
 		this.output = output;
@@ -76,22 +79,28 @@ public class FileLister {
 		if( output.exists()){
 			if( output.isDirectory())
 				throw new IOException("Output File is a Directory");}
+		ready = true;
+		return;}
 
+	public void start(){
 		//select directories
-		if( recursive){}
-		else;
-			//directories.add( input);
+		directories.add( input);
+		if( recursive){
+			filter = new FileFilter(){
+				public boolean accept( File file){
+					return file.isDirectory();}};
+			addSubFolders( input, filter);}
 
 		//create worker threads
 		for( File directory : directories)
 			workers.add( new Worker( directory));
 		//reset stats
 		total = workers.size();
-		ready = true;
-		return;}
-
-	public void start(){
+		//other stuff
+		input_path = input.toPath();
 		output.getParentFile().mkdirs();
+		
+		//start
 		synchronized( statslock){
 			started = true;}
 		if( total != 0)
@@ -142,6 +151,11 @@ public class FileLister {
 		synchronized( statslock){
 			done = true;}}
 
+	private void addSubFolders( File file, FileFilter filter){
+		for( File child : file.listFiles( filter)){
+			directories.add( child);
+			addSubFolders( child, filter);}}
+
 	//subclasses
 	protected class Worker extends Thread {
 		public File input;
@@ -155,8 +169,12 @@ public class FileLister {
 		public void run(){
 			succeeded = true;
 			completed = true;
-			//for each child file in input,
-			//  results.add( file relative to FileList.input);
+			for( File file : input.listFiles())
+				results.add(
+					relativize ?
+						FileLister.this.input_path.relativize(
+							file.toPath()).toString() :
+						file.toString());
 			handleWorkerTermination(this);}
 	}
 }

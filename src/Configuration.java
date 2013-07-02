@@ -69,8 +69,8 @@ public class Configuration{
 		try{
 			UIManager.setLookAndFeel(
 				"org.pushingpixels.substance.api.skin.SubstanceGraphiteGlassLookAndFeel");}
-		catch( Exception e){
-			System.out.println(e);}
+		catch( Exception e){}
+			//System.out.println(e);}
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				multiplyGuiFontSize( 1.2);}});}

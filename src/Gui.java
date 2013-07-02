@@ -53,7 +53,7 @@ public class Gui extends JFrame{
 			this.setIconImage(
 				ImageIO.read(
 					new ResourceManager().locate(icon_filename)));}
-		catch(Exception e){ System.out.println(e);}
+		catch(Exception e){ }//System.out.println(e);}
 
 		//add content
 		// get frame
@@ -77,7 +77,7 @@ public class Gui extends JFrame{
 		startPanel.switchTo();
 		this.setResizable(true);
 		this.setLocationRelativeTo(null);
-		System.out.println("Done Loading GUI");
+		//System.out.println("Done Loading GUI");
 		this.setVisible(true);}
 
 	//functions
@@ -92,14 +92,14 @@ public class Gui extends JFrame{
 		File result = null;
 		switch( returnCode){
 			case JFileChooser.CANCEL_OPTION:
-				System.out.println("File selection cancelled");
+				//System.out.println("File selection cancelled");
 				break;
 			case JFileChooser.APPROVE_OPTION:
-				System.out.println("File chosen");
+				//System.out.println("File chosen");
 				result = fileChooser.getSelectedFile();
 				break;
 			case JFileChooser.ERROR_OPTION:
-				System.out.println("File selection error");
+				//System.out.println("File selection error");
 				break;
 			default: break;}
 		return result;}
@@ -324,7 +324,8 @@ public class Gui extends JFrame{
 			defaultButton = button;}
 	}
 	protected class OptionsPanel extends CustomJPanel {
-		public JLabel mode_label;
+		public JCheckBox recursive;
+		public JCheckBox relativize;
 		public JButton cancel;
 		public JButton done;
 
@@ -338,10 +339,15 @@ public class Gui extends JFrame{
 			constraints.fill = GridBagConstraints.NONE;
 			constraints.insets = new Insets( 2, 2, 2, 2);
 
-			mode_label = new JLabel("Include Subfolders:");
+			recursive = new JCheckBox("Include Subfolders");
 			constraints.gridx = 0;
 			constraints.gridy = 0;
-			this.add( mode_label, constraints);
+			this.add( recursive, constraints);
+
+			relativize = new JCheckBox("Use Relative Paths");
+			constraints.gridx = 0;
+			constraints.gridy = 1;
+			this.add( relativize, constraints);
 
 			cancel = new JButton("Cancel");
 			done = new JButton("Done");
